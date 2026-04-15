@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cre Perita</title>
+    <style>
+        /* --- DISEÑO GENERAL --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #d35400; }
+
+        /* --- GRID DE PRODUCTOS --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .crepa-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255, 183, 77, 0.25);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .crepa-card:hover { 
+			border-color: rgb(251, 185, 88, 0.70); /* caramelo claro */
+			box-shadow: 0 6px 20px rgba(255, 183, 77, 0.70);
+			transform: scale(1.05);
+			}
+        .crepa-card img { width: 100%; border-radius: 8px; height: 150px; object-fit: cover; }
+        .crepa-card h3 {
+			margin: 10px 0 5px;
+			font-size: 1.2rem;
+			color: #8b4513; /* chocolate suave */
+		}
+
+        /* --- VENTANA POP-UP (MODAL) --- */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fff3d9;
+            margin: 10% auto;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            text-align: left;
+        }
+        .close {
+            position: absolute;
+            top: 10px; right: 20px;
+            font-size: 30px; font-weight: bold; cursor: pointer;
+        }
+        #img-modal {
+			width: 100%;
+			border-radius: 10px;
+			margin-bottom: 15px;
+		}
+		#descripcion-modal {
+			color: #6d4c41; /* Chocolate oscuro */
+			font-family: 'Poppins', 'Segoe UI', sans-serif;
+			font-weight: 700;
+			font-size: 1.1rem;
+		}
+		#titulo-modal {
+			color: #ff7043;
+		}
+        .precio { color: #27ae60; font-weight: bold; font-size: 1.3rem; }
+    </style>
+</head>
+<body>
+
+    <h1>Cre Perita</h1>
+
+    <div id="catalogo-crepas" class="grid-container"></div>
+
+    <div id="miModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <img id="img-modal" src="" alt="Crepa">
+            <h2 id="titulo-modal"></h2>
+            <p id="descripcion-modal"></p>
+            <p class="precio" id="precio-modal"></p>
+        </div>
+    </div>
+
+    <script>
+        // Datos de tus crepas (Fácil de actualizar)
+        const crepas = [
+            { id: 1, nombre: "Cre-Perita", 				precio: "$55.00", 		ingredientes: "Queso Philadelphia, Fresa natural, Durazno, Nuez y Lechera.", img: "Images/cre_perita.jpg" },
+            { id: 2, nombre: "Suprema", 				precio: "$70.00", 		ingredientes: "Queso Philadelphia, Nutella, Platano, Fresa natural, Durazno, Nuez, Lechera, 1 Kinder Delice.", img: "https://images.unsplash.com/photo-1621236304845-f210d738f7e6?q=80&w=400" },
+            { id: 3, nombre: "Harley", 					precio: "$70.00", 		ingredientes: "Queso Philadelphia, Nutella, Kinder Delice, 3 Ferreros.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 4, nombre: "Gus Gus", 				precio: "$60.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Fruta a elegir, 2 Ferreros.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 5, nombre: "Ram", 					precio: "$60.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Fruta a elegir, 1 Kinder Delice, Lechera y Nuez.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 6, nombre: "Coco Baileys", 			precio: "$60.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Fruta a elegir, 2 Chocolates Baileys.", img: "Images/coco_baileys.jpg" },
+			{ id: 7, nombre: "Bombi", 					precio: "$120.00", 		ingredientes: "Nutella, 3 Ferreros, 1 Huevo sorpresa, 1 Kinder Delice.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 8, nombre: "Sorpresa", 				precio: "$55.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Huevo sorpresa.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 9, nombre: "Cre-Buena", 				precio: "$55.00", 		ingredientes: "Queso Philadelphia, Nutella, 2 Kinder Bueno.", img: "Images/cre_buena.jpg" },
+			{ id: 10, nombre: "Frutas", 				precio: "$55.00", 		ingredientes: "Queso Philadelphia, Nutella, Platano, Fresa natural, Durazno, y Lechera.", img: "Images/frutas.jpg" },
+			{ id: 11, nombre: "Dulce Especial", 		precio: "$55.00", 		ingredientes: "Queso Philadelphia, Nutella, 2 Frutas a elegir, Nuez y Lechera.", img: "Images/dulce_especial.jpg" },
+			{ id: 12, nombre: "Emi", 					precio: "$45.00", 		ingredientes: "Nutella, 1 Fruta a elegir y Mazapan.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 13, nombre: "Mazapan", 				precio: "$50.00", 		ingredientes: "Queso Philadelphia, Nutella, Platano, Fresa natural, Durazno, Nuez, Lechera, 1 Kinder Delice.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 14, nombre: "Conejo", 				precio: "$50.00", 		ingredientes: "1 Fruta a elegir, 2 Conejos Turin.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 15, nombre: "Ferrero", 				precio: "$60.00", 		ingredientes: "Queso Philadelphia, Nutella, 3 Ferreros.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 16, nombre: "Delice", 				precio: "$50.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Kinder Delice.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 17, nombre: "Scrapy", 				precio: "$70.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Fruta a elegir, 1 Shot de Baileys licor y Chocolate liquido.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 19, nombre: "Monkey", 				precio: "$60.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Nito y ligero toque de Baileys licor.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 20, nombre: "Kitkat", 				precio: "$50.00", 		ingredientes: "Queso Philadelphia, Nutella, 1 Kitkat.", img: "Images/kikat.jpg" },
+			{ id: 18, nombre: "Extreme", 				precio: "$90.00", 		ingredientes: "Queso Philadelphia, Nutella, 2 Kinder Bueno, 2 Ferreros.", img: "https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=400" },
+			{ id: 21, nombre: "Nutella con Durazno", 	precio: "$35.00",		ingredientes: "Nutella y Durazno.", img: "Images/nutella_con_durazno.jpg" },
+			{ id: 22, nombre: "Nutella con Nuez",		precio: "$35.00", 		ingredientes: "Nutella y Nuez.", img: "Images/nutella_con_nuez.jpg" },
+			{ id: 23, nombre: "Carnes Frías", 			precio: "$65.00",		ingredientes: "Jamón, Pepperoni, Salchicha, Queso Oaxaca, Queso Manchego.", img: "Images/carnes_frias.jpg" }
+			
+        ];
+
+        const contenedor = document.getElementById('catalogo-crepas');
+
+        // Generar las tarjetas automáticamente
+        crepas.forEach(crepa => {
+            const card = document.createElement('div');
+            card.className = 'crepa-card';
+            card.onclick = () => abrirDetalle(crepa.id);
+            card.innerHTML = `
+                <img src="${crepa.img}" alt="${crepa.nombre}">
+                <h3>${crepa.nombre}</h3>
+                <small>Ver detalles</small>
+            `;
+            contenedor.appendChild(card);
+        });
+
+        // Lógica del Pop-up
+        function abrirDetalle(id) {
+            const crepa = crepas.find(c => c.id === id);
+            document.getElementById('img-modal').src = crepa.img;
+            document.getElementById('titulo-modal').innerText = crepa.nombre;
+            document.getElementById('descripcion-modal').innerText = crepa.ingredientes;
+            document.getElementById('precio-modal').innerText = `Precio: ${crepa.precio}`;
+            document.getElementById('miModal').style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById('miModal').style.display = "none";
+        }
+
+        // Cerrar si hacen clic fuera del cuadro blanco
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('miModal')) {
+                cerrarModal();
+            }
+        }
+    </script>
+</body>
+</html>
